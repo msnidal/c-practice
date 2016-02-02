@@ -29,11 +29,7 @@ void Database_close(struct Connection *conn)
         if (conn -> file) fclose (conn -> file);
         if (conn -> db) free (conn -> db);
         free(conn);
-
-        printf("Connection closed.\n");
-    } else {
-    printf("No connection to close.\n");
-    }
+    } 
 }
 
 void die (const char *message, struct Connection * conn)
@@ -154,6 +150,23 @@ void Database_list(struct Connection *conn)
     }
 }
 
+// Finds id of first instance of passed string
+struct Address * Database_find(struct Connection *conn, const char * string)
+{
+    int i = 0;
+    struct Database *db = conn -> db;
+
+    for (i = 0; i < MAX_ROWS; i++) {
+        struct Address *cur = &db -> rows[i];
+
+        if ((strcmp(string, cur -> name) == 0) || (strcmp(string, cur -> email) == 0)) {
+            return cur; 
+        }
+    }
+
+    return NULL;
+}
+
 int main (int argc, char *argv[])
 {
     if (argc < 3) die ("Usage: ex17 <dbfile> <action> [action params]", NULL);
@@ -196,8 +209,20 @@ int main (int argc, char *argv[])
             Database_list(conn);
             break;
 
+        case 'f':
+            if (argc != 4) die ("Need a string to search", conn);
+
+            struct Address * addr = Database_find(conn, argv[3]);
+            if (addr != NULL) {
+                printf("Entry found matching %s:\n", argv[3]);
+                Address_print(addr);
+            } else {
+                printf("No entry found matching %s\n", argv[3]);
+            }
+            break;
+
         default: 
-            die ("Invalid action, use 'c'reate, 'g'et, 'd'el, 'l'ist", conn);
+            die ("Invalid action, use 'c'reate, 'g'et, 's'et, 'd'el, 'l'ist, 'f'ind", conn);
     }
 
     Database_close(conn);
